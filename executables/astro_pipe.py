@@ -24,11 +24,9 @@ attributes = {"pressure":["pressurec2","eos"], "energy_density":["energy_density
               "mass":["M","ns"], "radius":["R","ns"], "tidal":["Lambda","ns"]}
 
 psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04},
-                   "J0740":{"Mass":2.14, "lower_bound":0.09, "upper_bound":0.10},
+                   "J0740":{"Mass":2.08, "lower_bound":0.07, "upper_bound":0.07},
                    "J1614":{"Mass":1.908, "lower_bound":0.016, "upper_bound":0.016}}
-
-###############################################################################################
-### Lyla's function to fit skewnorm to normal distribution with asymmetric standard deviations 
+ 
 def fit_skewnorm_from_asymmetric_bounds(mean, lower_error, upper_error, confidence=0.683):
     lower_bound = mean - lower_error
     upper_bound = mean + upper_error
@@ -44,7 +42,6 @@ def fit_skewnorm_from_asymmetric_bounds(mean, lower_error, upper_error, confiden
     delta = alpha / np.sqrt(1 + alpha**2)
     loc = mean - scale_guess * delta * np.sqrt(2 / np.pi)
     return alpha, loc, scale_guess
-###############################################################################################
 
 def load_eos(eos_samples, idx, tgt_columns = None, all_columns = False, index_weights = False):
     ### tgt_columns consist of: "pressure, energy_density, baryon_density, mass, radius, tidal"
@@ -76,8 +73,10 @@ def get_all_mmax(eos_samples, verbose = True):
     if verbose:
         print(f"Obtaining M_max for EoSs...")
     for eos_num in tqdm.tqdm(range(len(eos_samples["eos"]))):
-        eos_mmax.append(get_single_mmax(eos_samples, eos_num))
-        
+        try:
+            eos_mmax.append(get_single_mmax(eos_samples, eos_num))
+        except:
+            eos_mmax.append(0.5) # if EoS doesn't have any appended masses
     return np.array(eos_mmax)
 
 def weigh_pulsar(mmax, mass, sigma, skew = False, alpha = 0.0,
@@ -222,7 +221,7 @@ if __name__ == "__main__":
     verbose = True
     
     ### EoS samples location #####################################################
-    eos_file_path = "/home/sunny.ng/semiparameos/generated_eoss/MMGP_fixcrust_final.h5"
+    eos_file_path = "/home/sunny.ng/semiparameos/generated_eoss/NLSLTR_EOS_prior.h5"
     result_file_name = os.path.splitext(os.path.split(eos_file_path)[1])[0]
     
     try:

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import h5py
 import warnings
 import os
+import tqdm
 # -------------------------------
 # Non-standard Libraries
 import bilby
@@ -59,25 +60,37 @@ def monotonicity_check(press, edens, bary_dens):
         bary_dens = np.delete(bary_dens,zero_indices)
         press = np.delete(press,zero_indices)
         press_inc = np.diff(press)
-    mono_eos = {"pressurec2":press,"energy_densityc2":edens,"baryon_density":bary_dens}
+    
+    ### Need to re-interpolate over densities to have equally spaced increments for sound speed calculation
+    rng = np.geomspace(edens[0], edens[-1], len(edens)) 
+    bary_rng = np.geomspace(bary_dens[0], bary_dens[-1], len(bary_dens))
+    corr_press = np.interp(rng, edens, press) 
+    mono_eos = {"pressurec2":corr_press,"energy_densityc2":rng,"baryon_density":bary_rng}
+    
     return mono_eos
 
-def laltov_monotonicity_check(macro_filepath, overwrite = True): # because of course LAL needs special treatment... 
+def laltov_monotonicity_check(macro_filepath, rho_load, overwrite = True): # because of course LAL needs special treatment... 
     press, edens = np.loadtxt(macro_filepath, unpack = True) # loads two np.arrays, compatible with monotonic check
+    bary_dens = np.geomspace(rho_load[0],rho_load[-1], len(rho_load))
     press_inc = np.diff(press)
     while any(press_inc<=0):
         zero_indices = np.where(press_inc <= 0)[0]
         edens = np.delete(edens,zero_indices)
         press = np.delete(press,zero_indices)
+        bary_dens = np.delete(bary_dens,zero_indices)
         press_inc = np.diff(press)
     # store corrected EoS information again...
+    ### Need to re-interpolate over densities to have equally spaced increments for sound speed calculation
+    rng = np.geomspace(edens[0], edens[-1], len(edens)) 
+    bary_rng = np.geomspace(bary_dens[0], bary_dens[-1], len(bary_dens))
+    corr_press = np.interp(rng, edens, press)
     corr_df = pd.DataFrame(columns = ["pressurec2", "energy_densityc2"]) 
-    corr_df["pressurec2"] = press 
-    corr_df["energy_densityc2"] = edens
+    corr_df["pressurec2"] = corr_press 
+    corr_df["energy_densityc2"] = rng
     corr_arr = corr_df.to_records(index = False) # same save file routine
     if overwrite:
         np.savetxt(macro_filepath, corr_arr)
-    return
+    return bary_rng
 
 ### Need to convert everything to geometric units!
 def cgs_density_to_geometric(rho):
@@ -119,7 +132,8 @@ def TOVSolve(pressure, rho, eps, eps_0,
              solver = "Reprimand",
              eos_tov_file_dir = "/home/sunny.ng/semiparameos/tov_results",
              macro_idx = 0,
-             lal_solver_style = "Family"):
+             truncate_at_mtov = False,
+             lal_solver_style = "ODE"):
     
     """
     The main executable for TOV solving, based on a supplied EoS (in CGS units).
@@ -156,17 +170,15 @@ def TOVSolve(pressure, rho, eps, eps_0,
         tidal_masses = np.zeros((len(central_densities)),
                                  dtype={'names':("Lambda", "M", "R"), ### name of the groups in the structured array
                               'formats':("f8", "f8", "f8")}) ### assumed all floats
-
-        # ### Now make a structured array with tidal and masses
-        # tidal_masses = np.zeros((1,len(central_densities)),
-        #                          dtype={'names':("Lambda", "M", "R"), ### name of the groups in the structured array
-        #                       'formats':("f8", "f8", "f8")}) ### assumed all floats
-
         
         tidal_masses["M"] = masses
         tidal_masses["R"] = radii
         tidal_masses["Lambda"] = tidal
 
+        if truncate_at_mtov:
+            mtov_idx = np.argmax(tidal_masses["M"])
+            tidal_masses = tidal_masses[:mtov_idx]
+        
         return tidal_masses
    
     elif solver == "LAL":
@@ -179,25 +191,27 @@ def TOVSolve(pressure, rho, eps, eps_0,
         
         # check if macro file already exists
         macro_file = f"tov_draw_{macro_idx:06d}.txt" 
-        file_exist = os.path.isfile(os.path.join(eos_tov_file_dir, macro_file))
+        #file_exist = os.path.isfile(os.path.join(eos_tov_file_dir, macro_file))
         
-        if file_exist:
-            pass
-        elif not file_exist:    
-            macro_df = pd.DataFrame(columns = ["pressurec2","energy_densityc2"])
-            macro_df["pressurec2"] = press_to_si(pressure) ### converted pressure to SI (and then geometrized...)
-            macro_df["energy_densityc2"] = edens_to_si(eps) ### converted energy density to SI (and then geometrized...)
-            macro_arr = macro_df.to_records(index = False)
-            np.savetxt(f"{eos_tov_file_dir}/{macro_file}", macro_arr)
-            del macro_df # clear the dataframe
+        #if file_exist:
+        #    pass
+        #elif not file_exist:    
+        macro_df = pd.DataFrame(columns = ["pressurec2","energy_densityc2"])
+        macro_df["pressurec2"] = press_to_si(pressure) ### converted pressure to SI (and then geometrized...)
+        macro_df["energy_densityc2"] = edens_to_si(eps) ### converted energy density to SI (and then geometrized...)
+        macro_arr = macro_df.to_records(index = False)
+        np.savetxt(f"{eos_tov_file_dir}/{macro_file}", macro_arr)
+        del macro_df # clear the dataframe
+        
+        solve_rhoc = rho
         
         # TOV routine
         try:
             eos = lalsim.SimNeutronStarEOSFromFile(f"{eos_tov_file_dir}/{macro_file}")
         except: # implement monotonicity check again...
-            print("Attempting montonic check for LAL EoS read in...")
+            print("Attempting montonic correction for LAL EoS read in...")
             try:
-                laltov_monotonicity_check(f"{eos_tov_file_dir}/{macro_file}") # make eos monotonic
+                solve_rhoc = laltov_monotonicity_check(f"{eos_tov_file_dir}/{macro_file}", rho) # make eos monotonic
                 eos = lalsim.SimNeutronStarEOSFromFile(f"{eos_tov_file_dir}/{macro_file}")
             except:
                 raise ValueError(f"EoS {macro_idx} breaks TOV.")
@@ -223,15 +237,20 @@ def TOVSolve(pressure, rho, eps, eps_0,
                 mass_rad_tide[1].append(radius/1e3) # converts to km
                 mass_rad_tide[2].append(tidal)
                 m += mass_increment * lal.MSUN_SI
-
+            
             ### Create structured array to store macro data
             tidal_masses = np.zeros(len(mass_rad_tide[0]),
-                                     dtype={'names':("Lambda", "M", "R"), ### name of the groups in the structured array
-                                     'formats':("f8", "f8", "f8")})
+                                     dtype={'names':("Lambda", "M", "R", "rhoc"), ### name of the groups in the structured array
+                                     'formats':("f8", "f8", "f8", "f8")})
 
             tidal_masses["M"] = (mass_rad_tide[0])
             tidal_masses["R"] = (mass_rad_tide[1])
             tidal_masses["Lambda"] = (mass_rad_tide[2])
+            tidal_masses["rhoc"] = solve_rhoc
+            
+            if truncate_at_mtov:
+                mtov_idx = np.argmax(tidal_masses["M"])
+                tidal_masses = tidal_masses[:mtov_idx]
             
             del eos
             return tidal_masses
@@ -241,6 +260,10 @@ def TOVSolve(pressure, rho, eps, eps_0,
             # Iterate through central pressures given by EoS values
             # at this point in the solving routine, EoS values should already be stored in a .txt file
             macro_pressure, macro_eps = np.loadtxt(os.path.join(eos_tov_file_dir, macro_file), unpack = True) # units should already be converted
+            
+            # Only solve for rhoc greater than half saturation density 
+            #macro_pressure = macro_pressure[rho > 0.05*rho_nuc_in_cgs]
+            #macro_eps = macro_eps[rho > 0.05*rho_nuc_in_cgs]
             
             for p in range(len(macro_pressure)):
                 ### TOVODEIntegrate result [0,1,2] --> radius[m], mass [kg?], love_2 respectively
@@ -256,12 +279,17 @@ def TOVSolve(pressure, rho, eps, eps_0,
             
             ### Create structured array to store macro data
             tidal_masses = np.zeros(len(mass_rad_tide[0]),
-                                     dtype={'names':("Lambda", "M", "R"), ### name of the groups in the structured array
-                                     'formats':("f8", "f8", "f8")})
+                                     dtype={'names':("Lambda", "M", "R", "rhoc"), ### name of the groups in the structured array
+                                     'formats':("f8", "f8", "f8", "f8")})
                            
             tidal_masses["M"] = (mass_rad_tide[0])
             tidal_masses["R"] = (mass_rad_tide[1])
             tidal_masses["Lambda"] = (mass_rad_tide[2])
+            tidal_masses["rhoc"] = solve_rhoc
+            
+            if truncate_at_mtov:
+                mtov_idx = np.argmax(tidal_masses["M"])
+                tidal_masses = tidal_masses[:mtov_idx]
             
             del eos
             return tidal_masses
@@ -284,10 +312,10 @@ def restart_samples(loaded_samples, close = False):
 
 if __name__ == "__main__":
     
-    ### EoS samples #######################################
-    GP_result_file = "MMGP_full_test"
+    ### EoS samples ##########################################################################
+    GP_result_file = "MM_exp"
     eos_samples_file_path = f"/home/sunny.ng/semiparameos/generated_eoss/{GP_result_file}.h5" 
-    #######################################################
+    ##########################################################################################
 
     eos_samples = h5py.File(f"{eos_samples_file_path}", "r+")
     tov_result_folder_name = os.path.splitext(os.path.split(eos_samples_file_path)[1])[0]
@@ -313,7 +341,7 @@ if __name__ == "__main__":
     except:
         raise KeyError("ns group already exists.")
     
-    for eqn in range(len(eos_to_be_used)):
+    for eqn in tqdm.tqdm(range(len(eos_to_be_used))):
         
         try:
             macro_draw = TOVSolve(pressure = micro_data[eqn]["pressurec2"],
@@ -323,6 +351,7 @@ if __name__ == "__main__":
                                  macro_idx = eqn,
                                  solver = tov_solver_choice,
                                  lal_solver_style = "ODE",
+                                 truncate_at_mtov = True,
                                  eos_tov_file_dir = f"/home/sunny.ng/semiparameos/tov_results/{tov_result_folder_name}") ### need to change the home directory
             ns[f"eos_{eqn:06d}"] = macro_draw   
             print(f"Macro draw: eos_{eqn:06d} - generated.")
@@ -333,17 +362,13 @@ if __name__ == "__main__":
                 corr_eos = monotonicity_check(micro_data[eqn]["pressurec2"],
                                               micro_data[eqn]["energy_densityc2"],
                                               micro_data[eqn]["baryon_density"])
-                ### Need to re-interpolate over densities to have equally spaced increments for sound speed calculation
-                rng = np.geomspace(corr_eos["energy_densityc2"][0],corr_eos["energy_densityc2"][-1], len(corr_eos["energy_densityc2"])) 
-                corr_press = np.interp(rng, corr_eos["energy_densityc2"], corr_eos["pressurec2"])
-                corr_eos["pressurec2"] = corr_press
-                corr_eos["energy_densityc2"] = rng
                 macro_draw = TOVSolve(pressure = corr_eos["pressurec2"],
                                      rho = corr_eos["baryon_density"],
                                      eps = corr_eos["energy_densityc2"],
                                      eps_0 = corr_eos["energy_densityc2"][0],
                                      macro_idx = eqn,
                                      solver = tov_solver_choice,
+                                     truncate_at_mtov = True,
                                      lal_solver_style = "ODE",
                                      eos_tov_file_dir = f"/home/sunny.ng/semiparameos/tov_results/{tov_result_folder_name}")
 
