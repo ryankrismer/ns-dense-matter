@@ -42,10 +42,9 @@ def mm_eos_directory_to_h5(
 
 if __name__ == "__main__":
     
-    eos_folder = "marginalized_hyp"
-    eos_path = f"/home/sunny.ng/semiparameos/result/{eos_folder}/"
+    eos_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/all_eoss"
     num_eos = int(len(os.listdir(eos_path))) 
-    result_path = "/home/sunny.ng/semiparameos/generated_eoss"
-    output_file = "marginalized_hyp_MMGP.h5"
+    result_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit"
+    output_file = "gp_draws_ext_40.h5"
     mm_eos_directory_to_h5(eos_path, indices_to_use=[n for n in range(num_eos)], h5_outpath=f"{result_path}/{output_file}")
 
