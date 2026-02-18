@@ -1,3 +1,4 @@
+# Modified by Ryan Krismer for conformal EoS study
 __author__ = "sunnyng.sshn@gmail.com"
 # --------------------------------------
 
@@ -313,8 +314,8 @@ def restart_samples(loaded_samples, close = False):
 if __name__ == "__main__":
     
     ### EoS samples ##########################################################################
-    GP_result_file = "MM_exp"
-    eos_samples_file_path = f"/home/sunny.ng/semiparameos/generated_eoss/{GP_result_file}.h5" 
+    GP_result_file = "gp_draws_ext_40"
+    eos_samples_file_path = f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/{GP_result_file}.h5" 
     ##########################################################################################
 
     eos_samples = h5py.File(f"{eos_samples_file_path}", "r+")
@@ -352,7 +353,7 @@ if __name__ == "__main__":
                                  solver = tov_solver_choice,
                                  lal_solver_style = "ODE",
                                  truncate_at_mtov = True,
-                                 eos_tov_file_dir = f"/home/sunny.ng/semiparameos/tov_results/{tov_result_folder_name}") ### need to change the home directory
+                                 eos_tov_file_dir = f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/tov_results/{tov_result_folder_name}") ### need to change the home directory
             ns[f"eos_{eqn:06d}"] = macro_draw   
             print(f"Macro draw: eos_{eqn:06d} - generated.")
         except:
@@ -370,7 +371,7 @@ if __name__ == "__main__":
                                      solver = tov_solver_choice,
                                      truncate_at_mtov = True,
                                      lal_solver_style = "ODE",
-                                     eos_tov_file_dir = f"/home/sunny.ng/semiparameos/tov_results/{tov_result_folder_name}")
+                                     eos_tov_file_dir = f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/tov_results/{tov_result_folder_name}")
 
                 ns[f"eos_{eqn:06d}"] = macro_draw
                 print(f"Macro draw: eos_{eqn:06d} - generated.")
