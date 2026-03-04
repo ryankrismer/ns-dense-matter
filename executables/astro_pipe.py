@@ -23,9 +23,11 @@ eos_keys = ["eos","ns","mm_id"]
 attributes = {"pressure":["pressurec2","eos"], "energy_density":["energy_densityc2","eos"], "baryon_density":["baryon_densityc2","eos"],
               "mass":["M","ns"], "radius":["R","ns"], "tidal":["Lambda","ns"]}
 
-psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04},
-                   "J0740":{"Mass":2.08, "lower_bound":0.07, "upper_bound":0.07},
-                   "J1614":{"Mass":1.908, "lower_bound":0.016, "upper_bound":0.016}}
+# psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04},
+#                    "J0740":{"Mass":2.08, "lower_bound":0.07, "upper_bound":0.07},
+#                    "J1614":{"Mass":1.908, "lower_bound":0.016, "upper_bound":0.016}}
+
+psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04}}    # Only using single pulsar for test case
  
 def fit_skewnorm_from_asymmetric_bounds(mean, lower_error, upper_error, confidence=0.683):
     lower_bound = mean - lower_error
@@ -221,7 +223,7 @@ if __name__ == "__main__":
     verbose = True
     
     ### EoS samples location #####################################################
-    eos_file_path = "/home/sunny.ng/semiparameos/generated_eoss/NLSLTR_EOS_prior.h5"
+    eos_file_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/gp_draws_ext_40.h5"
     result_file_name = os.path.splitext(os.path.split(eos_file_path)[1])[0]
     
     try:
@@ -243,13 +245,13 @@ if __name__ == "__main__":
     
     ### Process weights to .csv
     process_weights_to_csv(all_astro_weights_df, save_to_csv = True,
-                           outpath_dir = "/home/sunny.ng/semiparameos/astro_likelihoods",
+                           outpath_dir = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods",
                            output_filename = f"{result_file_name}_posterior")
     
-    ### Obtain joint likelihood
-    psr_for_weighing = ["J0348","J0740","J1614"]
-    get_joint_likelihood(f"/home/sunny.ng/semiparameos/astro_likelihoods/{result_file_name}_posterior.csv",
-                         psr_events = psr_for_weighing,
-                         save_and_overwrite = True) 
+    ### Obtain joint likelihood (not for single pulsar test case)
+    # psr_for_weighing = ["J0348","J0740","J1614"]
+    # get_joint_likelihood(f"/home/sunny.ng/semiparameos/astro_likelihoods/{result_file_name}_posterior.csv",
+    #                      psr_events = psr_for_weighing,
+    #                      save_and_overwrite = True) 
                 
     eos_samples.close()
