@@ -10,7 +10,7 @@ from scipy.optimize import minimize_scalar
 import h5py
 import os
 import tqdm
-import analyze_nicer
+# import analyze_nicer    # Don't need for single pulsar test case
 try:
     import temperance
 except: ImportError("Cannot import temperance.")
@@ -23,11 +23,9 @@ eos_keys = ["eos","ns","mm_id"]
 attributes = {"pressure":["pressurec2","eos"], "energy_density":["energy_densityc2","eos"], "baryon_density":["baryon_densityc2","eos"],
               "mass":["M","ns"], "radius":["R","ns"], "tidal":["Lambda","ns"]}
 
-# psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04},
-#                    "J0740":{"Mass":2.08, "lower_bound":0.07, "upper_bound":0.07},
-#                    "J1614":{"Mass":1.908, "lower_bound":0.016, "upper_bound":0.016}}
-
-psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04}}    # Only using single pulsar for test case
+psr_events_dict = {"J0348":{"Mass":2.01, "lower_bound":0.04, "upper_bound":0.04},
+                   "J0740":{"Mass":2.08, "lower_bound":0.07, "upper_bound":0.07},
+                   "J1614":{"Mass":1.908, "lower_bound":0.016, "upper_bound":0.016}}
  
 def fit_skewnorm_from_asymmetric_bounds(mean, lower_error, upper_error, confidence=0.683):
     lower_bound = mean - lower_error
@@ -240,8 +238,32 @@ if __name__ == "__main__":
     eos_mtov = get_all_mmax(eos_samples, verbose)
     init_astro_df["Mmax"] = eos_mtov
     
-    ### Weigh multiple pulsars
-    all_astro_weights_df = weigh_all_pulsar(init_astro_df, eos_mtov)
+    # ### Weigh multiple pulsars
+    # all_astro_weights_df = weigh_all_pulsar(init_astro_df, eos_mtov)
+
+    ### Weigh single pulsar J0348 (Ryan's modification)
+    ##################################################################################################################################
+    event = "J0348"
+    test_mass = psr_events_dict[event]["Mass"]
+    test_lower = psr_events_dict[event]["lower_bound"]
+    test_upper = psr_events_dict[event]["upper_bound"]
+        
+    ### Getting PSR information
+    pulsar_mass = test_mass
+    if test_lower == test_upper:
+        measure_unc = test_upper
+    elif test_lower != test_upper:
+        print(f"PSR {event} has asymmetric bounds! Fitting to skewed normal distribution for likelihood calculation...")
+        skew_alpha, skew_mass, skew_scale = fit_skewnorm_from_asymmetric_bounds(test_mass,
+                                                                                test_lower,
+                                                                                test_upper)
+        pulsar_mass = skew_mass
+        measure_unc = skew_scale
+            
+    psr_weights = weigh_pulsar(eos_mtov, pulsar_mass, measure_unc) # returns numpy array holding PSR weights
+    init_astro_df[f"PSR_{event}"] = psr_weights
+    all_astro_weights_df = init_astro_df.copy()
+    ##################################################################################################################################
     
     ### Process weights to .csv
     process_weights_to_csv(all_astro_weights_df, save_to_csv = True,
