@@ -260,7 +260,7 @@ if __name__ == "__main__":
         pulsar_mass = skew_mass
         measure_unc = skew_scale
             
-    psr_weights = weigh_pulsar(eos_mtov, pulsar_mass, measure_unc) # returns numpy array holding PSR weights
+    psr_weights = weigh_pulsar(eos_mtov, pulsar_mass, measure_unc, log_outputs = False) # returns numpy array holding PSR weights
     init_astro_df[f"PSR_{event}"] = psr_weights
     all_astro_weights_df = init_astro_df.copy()
     ##################################################################################################################################
