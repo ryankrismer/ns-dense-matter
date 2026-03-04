@@ -129,7 +129,7 @@ def eos_instance(pressure, rho, eps, eps_0):
     
 def TOVSolve(pressure, rho, eps, eps_0,
              min_central_dens = rho_nuc_in_cgs, # min and max central densities to search with, using RePrimAnd
-             max_central_dens = 15*rho_nuc_in_cgs,
+             max_central_dens = 10*rho_nuc_in_cgs,    # 10rho_0 for pinched conformal EoSs, 15rho_0 originally
              solver = "Reprimand",
              eos_tov_file_dir = "/home/sunny.ng/semiparameos/tov_results",
              macro_idx = 0,
@@ -314,7 +314,7 @@ def restart_samples(loaded_samples, close = False):
 if __name__ == "__main__":
     
     ### EoS samples ##########################################################################
-    GP_result_file = "gp_draws_ext_40"
+    GP_result_file = "gp_draws_ext_40_conformal"
     eos_samples_file_path = f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/{GP_result_file}.h5" 
     ##########################################################################################
 
