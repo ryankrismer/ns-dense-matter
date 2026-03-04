@@ -178,9 +178,15 @@ def clean_weights(weights_df):
     
     return weights_df
 
-def weigh_all_pulsar(likelihood_df, eos_mtov, verbose = True): 
-    
-    for event in psr_events_dict:
+def weigh_all_pulsar(likelihood_df, eos_mtov, verbose = True, psr_to_use = None): 
+
+    ### Deciding which pulsars to weigh
+    if psr_to_use is not None:
+        psr_events = psr_to_use
+    else:
+        psr_events = psr_events_dict
+        
+    for event in psr_events:
         if verbose:
             print(f"Weighing EoS's with PSR {event}...")
         
@@ -243,26 +249,7 @@ if __name__ == "__main__":
 
     ### Weigh single pulsar J0348 (Ryan's modification)
     ##################################################################################################################################
-    event = "J0348"
-    test_mass = psr_events_dict[event]["Mass"]
-    test_lower = psr_events_dict[event]["lower_bound"]
-    test_upper = psr_events_dict[event]["upper_bound"]
-        
-    ### Getting PSR information
-    pulsar_mass = test_mass
-    if test_lower == test_upper:
-        measure_unc = test_upper
-    elif test_lower != test_upper:
-        print(f"PSR {event} has asymmetric bounds! Fitting to skewed normal distribution for likelihood calculation...")
-        skew_alpha, skew_mass, skew_scale = fit_skewnorm_from_asymmetric_bounds(test_mass,
-                                                                                test_lower,
-                                                                                test_upper)
-        pulsar_mass = skew_mass
-        measure_unc = skew_scale
-            
-    psr_weights = weigh_pulsar(eos_mtov, pulsar_mass, measure_unc) # returns numpy array holding PSR weights
-    init_astro_df[f"PSR_{event}"] = psr_weights
-    all_astro_weights_df = init_astro_df.copy()
+    all_astro_weights_df = weigh_all_pulsar(init_astro_df, eos_mtov, psr_to_use = ["J0348"])
     ##################################################################################################################################
     
     ### Process weights to .csv
