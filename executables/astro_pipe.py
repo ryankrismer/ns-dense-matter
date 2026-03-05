@@ -244,23 +244,18 @@ if __name__ == "__main__":
     eos_mtov = get_all_mmax(eos_samples, verbose)
     init_astro_df["Mmax"] = eos_mtov
     
-    # ### Weigh multiple pulsars
-    # all_astro_weights_df = weigh_all_pulsar(init_astro_df, eos_mtov)
-
-    ### Weigh single pulsar J0348 (Ryan's modification)
-    ##################################################################################################################################
-    all_astro_weights_df = weigh_all_pulsar(init_astro_df, eos_mtov, psr_to_use = ["J0348"])
-    ##################################################################################################################################
+    ### Weigh multiple pulsars
+    all_astro_weights_df = weigh_all_pulsar(init_astro_df, eos_mtov)
     
     ### Process weights to .csv
     process_weights_to_csv(all_astro_weights_df, save_to_csv = True,
                            outpath_dir = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods",
-                           output_filename = f"{result_file_name}_posterior")
+                           output_filename = "pulsar_weights.csv")
     
-    ### Obtain joint likelihood (not for single pulsar test case)
-    # psr_for_weighing = ["J0348","J0740","J1614"]
-    # get_joint_likelihood(f"/home/sunny.ng/semiparameos/astro_likelihoods/{result_file_name}_posterior.csv",
-    #                      psr_events = psr_for_weighing,
-    #                      save_and_overwrite = True) 
+    ## Obtain joint likelihood
+    psr_for_weighing = ["J0348","J0740","J1614"]
+    get_joint_likelihood(f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods/pulsar_weights.csv",
+                         psr_events = psr_for_weighing,
+                         save_and_overwrite = True) 
                 
     eos_samples.close()
