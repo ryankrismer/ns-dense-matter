@@ -333,7 +333,7 @@ if __name__ == "__main__":
     #######################################################
     
     ### Delete "ns" group if it already exists to restart TOV routine. Mainly to address partially created TOV sets due to errors occuring. 
-    restart_tov_generation = True
+    restart_tov_generation = False
     if restart_tov_generation:
         restart_samples(eos_samples)
     
