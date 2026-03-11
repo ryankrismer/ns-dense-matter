@@ -314,7 +314,7 @@ def restart_samples(loaded_samples, close = False):
 if __name__ == "__main__":
     
     ### EoS samples ##########################################################################
-    GP_result_file = "gp_draws_ext_40_conformal"
+    GP_result_file = "conformal"
     eos_samples_file_path = f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/{GP_result_file}.h5" 
     ##########################################################################################
 
