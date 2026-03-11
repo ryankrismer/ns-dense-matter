@@ -11,12 +11,12 @@ import h5py
 import os
 import tqdm
 # import analyze_nicer    # Don't need for single pulsar test case
-try:
-    import temperance
-except: ImportError("Cannot import temperance.")
-try:
-    import universality
-except: ImportError("Cannot import universality.")
+# try:
+#     import temperance
+# except: ImportError("Cannot import temperance.")
+# try:
+#     import universality
+# except: ImportError("Cannot import universality.")
 
 # attributes = ["pressurec2", "energy_densityc2", "baryon_densityc2", "M", "R", "Lambda"]
 eos_keys = ["eos","ns","mm_id"]
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     verbose = True
     
     ### EoS samples location #####################################################
-    eos_file_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/gp_draws_ext_40.h5"
+    eos_file_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/prior_15rho_0_non_conformal.h5"
     result_file_name = os.path.splitext(os.path.split(eos_file_path)[1])[0]
     
     try:
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     ### Process weights to .csv
     process_weights_to_csv(all_astro_weights_df, save_to_csv = True,
                            outpath_dir = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods",
-                           output_filename = "pulsar_weights.csv")
+                           output_filename = "pulsar_weights")
     
     ## Obtain joint likelihood
     psr_for_weighing = ["J0348","J0740","J1614"]
