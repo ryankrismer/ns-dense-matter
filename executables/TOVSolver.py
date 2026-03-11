@@ -314,7 +314,7 @@ def restart_samples(loaded_samples, close = False):
 if __name__ == "__main__":
     
     ### EoS samples ##########################################################################
-    GP_result_file = "conformal"
+    GP_result_file = "prior"
     eos_samples_file_path = f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/{GP_result_file}.h5" 
     ##########################################################################################
 
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     #######################################################
     
     ### Delete "ns" group if it already exists to restart TOV routine. Mainly to address partially created TOV sets due to errors occuring. 
-    restart_tov_generation = False
+    restart_tov_generation = True
     if restart_tov_generation:
         restart_samples(eos_samples)
     
