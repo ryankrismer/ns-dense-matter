@@ -68,35 +68,6 @@ def mm_eos_directory_to_h5(
     mm_id = h5file.create_dataset("mm_id", data=np.array(mm_ids))
     h5file.close()
 
-# ### Function to save a subset of EoSs in a larger h5 file to a smaller h5 file
-# def h5_subset_to_h5(directory_path, indices_to_use, h5_in_name, h5_out_name, mm_template = lambda index: f"EoSNewRestricted-{index}"):
-#     # Reading data from larger h5 file
-#     h5_inpath = f"{directory_path}/{h5_in_name}.h5"
-#     h5_infile = h5py.File(h5_inpath, "r+")
-#     eos_data = h5_infile["eos"]
-
-#     # Creating smaller h5 file to write data to
-#     h5_outpath = f"{directory_path}/{h5_out_name}.h5"
-#     h5_outfile = h5py.File(h5_outpath, "w")
-#     eos_group = h5_outfile.create_group("eos")
-#     mm_ids  = []
-#     for index in indices_to_use:
-#         try:
-#             # eos = eos_data[f"eos_{index:06d}"]
-
-#             sample_id = index - 15 * mm_id
-#             eos = pd.read_csv(os.path.join(directory_path, mm_template(index), f"eos-draw-{sample_id:04d}.csv"))
-#         except:
-#             print("EOS read in failure.")
-
-#         print(type(pd.DataFrame(eos[:])))
-
-#         eos_group[f"eos_{index:06d}"] = pd.DataFrame(eos[:])
-#         mm_ids.append(index)
-#     eos_id = h5_outfile.create_dataset("id", data=np.array(indices_to_use))
-#     mm_id = h5_outfile.create_dataset("mm_id", data=np.array(mm_ids))
-#     h5_outfile.close()
-
 if __name__ == "__main__":
 
     project_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit"
