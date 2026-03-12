@@ -227,7 +227,7 @@ if __name__ == "__main__":
     verbose = True
     
     ### EoS samples location #####################################################
-    eos_file_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/prior_15rho_0_non_conformal.h5"
+    eos_file_path = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/prior.h5"
     result_file_name = os.path.splitext(os.path.split(eos_file_path)[1])[0]
     
     try:
@@ -250,11 +250,11 @@ if __name__ == "__main__":
     ### Process weights to .csv
     process_weights_to_csv(all_astro_weights_df, save_to_csv = True,
                            outpath_dir = "/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods",
-                           output_filename = "pulsar_weights")
+                           output_filename = "pulsar_weights_prior")
     
     ## Obtain joint likelihood
     psr_for_weighing = ["J0348","J0740","J1614"]
-    get_joint_likelihood(f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods/pulsar_weights.csv",
+    get_joint_likelihood(f"/home/ryan.krismer/CSUF_EoS_project/ns_dense_matter/conformal_limit/astro_likelihoods/pulsar_weights_prior.csv",
                          psr_events = psr_for_weighing,
                          save_and_overwrite = True) 
                 
