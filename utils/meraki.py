@@ -753,10 +753,12 @@ def plot_corner_mmax_radius(control_eos_macro,
                             posterior_label = r"MM+$\chi$+GP",
                             prior_color = "#d38718",
                             posterior_color = "#5A91DD",
+                            alpha = 1,
                             prior_weights = None,
                             plot_folder = None,
                             plot_name = None,
                             legend_title = True,
+                            prior_first = False
                            ):
     
     macro_control = control_eos_macro
@@ -799,6 +801,7 @@ def plot_corner_mmax_radius(control_eos_macro,
     figure = corner.corner(
         semiparam_data,
         color=posterior_color,
+        alpha = alpha,
         plot_datapoints=False,
         fill_contours=False,
         plot_contours=True,
@@ -813,6 +816,7 @@ def plot_corner_mmax_radius(control_eos_macro,
         legred_data,
         fig=figure,
         color=prior_color,
+        alpha = alpha,
         plot_datapoints=False,
         fill_contours=False,
         plot_contours=True,
@@ -826,21 +830,39 @@ def plot_corner_mmax_radius(control_eos_macro,
     red_patch = mpatches.Patch(color=prior_color, label=prior_label)
 
     if legend_title:
-        figure.legend(
-            handles=[blue_patch, red_patch],
-            loc="upper right",
-            bbox_to_anchor=(0.9, 0.85),
-            title = "PSR Informed",
-            title_fontsize = 8.0,
-            fontsize=8.0,
-        )
+        if prior_first:
+            figure.legend(
+                handles=[red_patch, blue_patch],
+                loc="upper right",
+                bbox_to_anchor=(0.9, 0.85),
+                title = "PSR Informed",
+                title_fontsize = 8.0,
+                fontsize=8.0,
+            )
+        else:
+            figure.legend(
+                handles=[blue_patch, red_patch],
+                loc="upper right",
+                bbox_to_anchor=(0.9, 0.85),
+                title = "PSR Informed",
+                title_fontsize = 8.0,
+                fontsize=8.0,
+            )
     else:
-        figure.legend(
-            handles=[blue_patch, red_patch],
-            loc="upper right",
-            bbox_to_anchor=(0.9, 0.85),
-            fontsize=8.0,
-        )
+        if prior_first:
+            figure.legend(
+                handles=[red_patch, blue_patch],
+                loc="upper right",
+                bbox_to_anchor=(0.9, 0.85),
+                fontsize=8.0,
+            )
+        else:
+            figure.legend(
+                handles=[blue_patch, red_patch],
+                loc="upper right",
+                bbox_to_anchor=(0.9, 0.85),
+                fontsize=8.0,
+            )
         
     # Get the axes on the diagonal
     axes = np.array(figure.axes).reshape((2, 2))
